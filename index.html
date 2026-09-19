@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Bloom — Chat</title>
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Import map for Google Gen AI SDK -->
+  <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://esm.run/@google/genai"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="app" role="region" aria-label="Chat">
+    <div class="head">
+      <div class="mark">🌸</div>
+      <div class="head-text">
+        <div class="name">Bloom</div>
+        <div class="status">here to chat</div>
+      </div>
+      <button class="reset-btn" id="resetBtn" type="button">Clear</button>
+    </div>
+
+    <div class="log" id="log" aria-live="polite"></div>
+
+    <form class="composer" id="composer">
+      <textarea id="input" rows="1" placeholder="Say something nice…" aria-label="Message"></textarea>
+      <button class="send" id="sendBtn" type="submit" aria-label="Send message">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="19" x2="12" y2="5"></line>
+          <polyline points="6 11 12 5 18 11"></polyline>
+        </svg>
+      </button>
+    </form>
+  </div>
+
+  <!-- Loaded as an ES Module -->
+  <script type="module" src="script.js"></script>
+</body>
+</html>
