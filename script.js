@@ -5,12 +5,13 @@
   const sendBtn = document.getElementById('sendBtn');
   const resetBtn = document.getElementById('resetBtn');
 
-  // 1. Paste your Google AI Studio key here:
-  const API_KEY = "AQ.Ab8RN6Lo4xljrFv3qhtYtAmYJtMHe2PD_WS1ss_XI5rTE9Ty2Q";
+  // --- PASTE YOUR KEYS HERE ---
+  const GEMINI_API_KEY = "AQ.Ab8RN6IVkBhxEYokoa5S4cfiDeGJMJ3Ds3tLXVTT8dXDfXuJ-Q"; // Starts with AIzaSy...
+  const GROQ_API_KEY   = "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";   // Starts with gsk_...
 
   const GREETING = "Hiii! I'm Bloom 🌸 What's up?";
-  
-  // Store full message history so Bloom remembers what you talked about
+  const SYSTEM_INSTRUCTION = "You are Bloom, a warm, cheerful, and friendly AI assistant. Keep responses brief and friendly.";
+
   let chatHistory = [];
 
   function addMessage(role, text) {
@@ -42,50 +43,109 @@
     if (row) row.remove();
   }
 
-  async function generateResponse(userMessage) {
-    // Append user input into history format required by Gemini
-    chatHistory.push({
-      role: "user",
-      parts: [{ text: userMessage }]
-    });
+  // --- PROVIDER 1: GEMINI ---
+  async function callGemini() {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY.includes("YOUR_")) {
+      throw new Error("Gemini Key is missing in script.js");
+    }
 
-    // Change this line in your script.js:
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${API_KEY}`;
-    const requestOptions = {
+    const contents = chatHistory.map(item => ({
+      role: item.role === 'user' ? 'user' : 'model',
+      parts: [{ text: item.content }]
+    }));
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+    const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: "You are Bloom, a warm, cheerful, and friendly AI assistant. Keep responses brief and friendly." }]
-        },
-        contents: chatHistory
+        systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+        contents: contents
       })
-    };
+    });
 
-    try {
-      const response = await fetch(API_URL, requestOptions);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error?.message || `HTTP ${response.status}`);
-      }
-
-      const botReply = data.candidates[0].content.parts[0].text;
-
-      // Save bot response back into history
-      chatHistory.push({
-        role: "model",
-        parts: [{ text: botReply }]
-      });
-
-      return botReply;
-
-    } catch (error) {
-      console.error("Gemini Error:", error);
-      // Remove failed message from history array so user can retry cleanly
-      chatHistory.pop();
-      return `Error: ${error.message || "Failed to generate response."}`;
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(`Gemini Error (${res.status}): ${data.error?.message || res.statusText}`);
     }
+
+    return data.candidates?.[0]?.content?.parts?.[0]?.text;
+  }
+
+  // --- PROVIDER 2: GROQ ---
+  async function callGroq() {
+    if (!GROQ_API_KEY || GROQ_API_KEY.includes("YOUR_")) {
+      throw new Error("Groq Key is missing in script.js");
+    }
+
+    const messages = [
+      { role: "system", content: SYSTEM_INSTRUCTION },
+      ...chatHistory.map(item => ({
+        role: item.role === 'user' ? 'user' : 'assistant',
+        content: item.content
+      }))
+    ];
+
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+      model: "openai/gpt-oss-20b",
+      messages: messages,
+      max_tokens: 300
+    })
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(`Groq Error (${res.status}): ${data.error?.message || res.statusText}`);
+    }
+
+    return data.choices?.[0]?.message?.content;
+  }
+
+  // --- PIPELINE WITH DETAILED ERROR DISPLAY ---
+  async function generateResponse(userMessage) {
+    chatHistory.push({ role: 'user', content: userMessage });
+
+    if (chatHistory.length > 10) {
+      chatHistory = chatHistory.slice(-10);
+    }
+
+    let geminiErr = "";
+    let groqErr = "";
+
+    // 1. Try Gemini
+    try {
+      const reply = await callGemini();
+      if (reply) {
+        chatHistory.push({ role: 'assistant', content: reply });
+        return reply;
+      }
+    } catch (err) {
+      geminiErr = err.message;
+      console.warn("Gemini Failed:", err.message);
+    }
+
+    // 2. Try Groq
+    try {
+      const reply = await callGroq();
+      if (reply) {
+        chatHistory.push({ role: 'assistant', content: reply });
+        return reply;
+      }
+    } catch (err) {
+      groqErr = err.message;
+      console.warn("Groq Failed:", err.message);
+    }
+
+    // If both fail, print exact causes
+    chatHistory.pop();
+    return `Error Log:\n1. ${geminiErr}\n2. ${groqErr}`;
   }
 
   async function handleSend(e) {
@@ -93,19 +153,15 @@
     const text = input.value.trim();
     if (!text) return;
 
-    // Display user bubble
     addMessage('user', text);
     input.value = '';
     autoGrow();
     sendBtn.disabled = true;
 
-    // Display typing dots
     showTyping();
 
-    // Fetch response from Gemini
     const botReply = await generateResponse(text);
 
-    // Hide dots and show reply
     hideTyping();
     addMessage('bot', botReply);
     sendBtn.disabled = false;
@@ -129,11 +185,10 @@
 
   resetBtn.addEventListener('click', function () {
     log.innerHTML = '';
-    chatHistory = []; // Reset memory
+    chatHistory = [];
     addMessage('bot', GREETING);
   });
 
-  // Load Initial Bot Greeting
   addMessage('bot', GREETING);
   input.focus();
 })();
