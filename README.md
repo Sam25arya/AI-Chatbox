@@ -8,6 +8,26 @@ A lightweight, beginner-friendly AI chatbot web interface built using vanilla **
 
 ---
 
+## ✨ Features
+
+* **Real-time AI Chat:** Basic chat interface powered by Google Gemini API (`gemini-2.0-flash`).
+* **Basic Context History:** Maintains simple in-memory session history during active chats.
+* **Auto-Resizing Input:** Textarea expands automatically as you type.
+* **Typing Indicator:** Basic CSS dot animation feedback while fetching responses.
+* **Clear Chat:** Reset button to clear local session history.
+* **Responsive Styling:** Modern, soft pastel UI styled for desktop and mobile browsers.
+
+---
+
+## 🚀 Quick Start
+
+### 1. Project Setup
+Save the three project files in the same directory:
+```text
+├── index.html
+├── style.css
+└── script.js
+
 ## 🎨 Visual Preview & UI Details
 
 ```text
@@ -22,5 +42,7 @@ A lightweight, beginner-friendly AI chatbot web interface built using vanilla **
 |  🌸 Today is Saturday, September 19, 2026!      |
 |                                                  |
 +--------------------------------------------------+
-| [ Say something nice...              ]   ( Send )|
+
+
+" />[ Say something nice...              ]   ( Send )|
 +--------------------------------------------------+
