@@ -6,8 +6,8 @@
   const resetBtn = document.getElementById('resetBtn');
 
   // --- PASTE YOUR KEYS HERE ---
-  const GEMINI_API_KEY = "AQ.Ab8RN6IVkBhxEYokoa5S4cfiDeGJMJ3Ds3tLXVTT8dXDfXuJ-Q"; // Starts with AIzaSy...
-  const GROQ_API_KEY   = "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";   // Starts with gsk_...
+  const GEMINI_API_KEY = "Paste your Gemini API key";
+  const GROQ_API_KEY   = "Paste your GROQ API key";   
 
   const GREETING = "Hiii! I'm Bloom 🌸 What's up?";
   const SYSTEM_INSTRUCTION = "You are Bloom, a warm, cheerful, and friendly AI assistant. Keep responses brief and friendly.";
